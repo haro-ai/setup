@@ -85,11 +85,18 @@ export PATH="$HOME/.local/bin:$PATH"
 eval "$(mise activate bash 2>/dev/null || true)"
 
 # ----------------------------
-# Node + Codex (via mise + npm)
+# Node + npm + Codex (via mise)
 # ----------------------------
-if ! command -v node >/dev/null 2>&1; then
-  echo "==> Installing Node LTS via mise"
-  mise use -g node@lts
+echo "==> Installing Node + npm via mise"
+mise use -g node@lts npm@latest
+
+# Make sure this shell sees mise shims/paths
+eval "$(mise activate bash 2>/dev/null || true)"
+hash -r
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "ERROR: npm is still not on PATH. Try re-login or run: eval \"\$(mise activate bash)\""
+  exit 1
 fi
 
 if ! command -v codex >/dev/null 2>&1; then
