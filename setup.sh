@@ -94,8 +94,14 @@ eval "$(mise activate bash 2>/dev/null || true)"
 # ----------------------------
 # Node + npm + Codex (via mise)
 # ----------------------------
-echo "==> Installing Node + npm via mise"
-mise use -g node@lts npm@latest
+echo "==> Installing Node + npm + pnpm via mise"
+mise use -g node@lts npm@latest pnpm@latest
+
+# ----------------------------
+# Bun + deno (via mise)
+# ----------------------------
+echo "==> Installing bun + deno via mise"
+mise use -g bun@latest deno@latest
 
 # Make sure this shell sees mise shims/paths
 eval "$(mise activate bash 2>/dev/null || true)"
