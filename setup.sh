@@ -92,23 +92,22 @@ export PATH="$HOME/.local/bin:$PATH"
 eval "$(mise activate bash 2>/dev/null || true)"
 
 # ----------------------------
-# Node + npm + Codex (via mise)
+# JS tooling (via mise)
 # ----------------------------
-echo "==> Installing Node + npm + pnpm via mise"
-mise use -g node@lts npm@latest pnpm@latest
-
-# ----------------------------
-# Bun + deno (via mise)
-# ----------------------------
-echo "==> Installing bun + deno via mise"
-mise use -g bun@latest deno@latest
+echo "==> Installing JS tooling via mise"
+mise use -g node@lts npm@latest pnpm@latest bun@latest deno@latest
 
 # Make sure this shell sees mise shims/paths
 eval "$(mise activate bash 2>/dev/null || true)"
 hash -r
 
 if ! command -v npm >/dev/null 2>&1; then
-  echo "ERROR: npm is still not on PATH. Try re-login or run: eval \"\$(mise activate bash)\""
+  echo "ERROR: npm is not on PATH. Try re-login or run: eval \"\$(mise activate bash)\""
+  exit 1
+fi
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "ERROR: pnpm is not on PATH. Try re-login or run: eval \"\$(mise activate bash)\""
   exit 1
 fi
 
