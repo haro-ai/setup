@@ -3,6 +3,9 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+# ----------------------------
+# System updates & core
+# ----------------------------
 echo "==> Updating system"
 sudo apt-get update -y
 sudo apt-get upgrade -y
@@ -29,6 +32,10 @@ sudo apt-get install -y \
   net-tools \
   ripgrep \
   fd-find
+
+echo "==> Configuring Git identity"
+git config --global user.name "Haro"
+git config --global user.email "haro-bot@kivlor.com"
 
 # Optional convenience: make `fd` available as `fd` (Debian ships `fdfind`)
 if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
