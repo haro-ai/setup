@@ -76,7 +76,7 @@ fi
 sudo usermod -aG docker "$USER" || true
 
 # ----------------------------
-# mise
+# Mise
 # ----------------------------
 if [ ! -x "$HOME/.local/bin/mise" ]; then
   echo "==> Installing mise"
@@ -111,9 +111,12 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v codex >/dev/null 2>&1; then
-  echo "==> Installing Codex CLI"
-  npm install -g @openai/codex
+# ----------------------------
+# Pi CLI
+# ----------------------------
+if ! command -v pi >/dev/null 2>&1; then
+  echo "==> Installing Pi CLI"
+  npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 fi
 
 # ----------------------------
