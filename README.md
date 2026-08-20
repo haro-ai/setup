@@ -24,7 +24,8 @@ ssh-add ~/.ssh/id_ed25519
 gh auth login --git-protocol ssh
 ```
 
-4. Authenticate codex
+4. Authenticate pi
 ```sh
-codex login --device-auth
+pi
+# then run: /login
 ```

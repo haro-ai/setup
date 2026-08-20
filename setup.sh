@@ -44,38 +44,6 @@ if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
 fi
 
 # ----------------------------
-# Docker (official repo)
-# ----------------------------
-if ! command -v docker >/dev/null 2>&1; then
-  echo "==> Installing Docker"
-
-  sudo install -m 0755 -d /etc/apt/keyrings
-
-  if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
-    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-  fi
-
-  if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  fi
-
-  sudo apt-get update -y
-  sudo apt-get install -y \
-    docker-ce \
-    docker-ce-cli \
-    containerd.io \
-    docker-buildx-plugin \
-    docker-compose-plugin
-
-  sudo systemctl enable --now docker
-fi
-
-# Allow current user to run docker without sudo (takes effect after re-login)
-sudo usermod -aG docker "$USER" || true
-
-# ----------------------------
 # Mise
 # ----------------------------
 if [ ! -x "$HOME/.local/bin/mise" ]; then
@@ -140,5 +108,4 @@ echo ""
 echo "Next steps:"
 echo "  1) Reboot: sudo reboot"
 echo "  2) After reboot, authenticate Tailscale: sudo tailscale up"
-echo "  3) Log out/in (or reboot) for docker group to apply (so you can run docker without sudo)."
 echo ""
