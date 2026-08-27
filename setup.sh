@@ -181,9 +181,10 @@ fetch_file files/memory.ts "$AGENT_DIR/extensions/memory.ts"
 touch "$AGENT_DIR/memories.txt"
 
 # ----------------------------
-# Telegram bridge (optional)
-# Installs tgbridge.ts + systemd unit. Only enables the service if
-# ~/.pi/agent/tg.json exists (token + allowed chat ids).
+# Telegram bridge
+# Installs tgbridge.ts + systemd unit. The agent creates
+# ~/.pi/agent/tg.json (token + allowed chat ids) on first interaction,
+# like SOUL.md, and enables the service — see files/AGENTS.md.
 # ----------------------------
 if [ ! -f "$HOME/.pi/agent/tools/tgbridge.ts" ]; then
   echo "==> Installing telegram bridge"
@@ -231,4 +232,6 @@ echo "  2) Reboot: sudo reboot"
 echo "  3) After reboot, authenticate Tailscale: sudo tailscale up"
 echo "  4) Authenticate pi: run 'pi', then /login"
 echo "     On first interaction, pi will generate its identity file (SOUL.md)."
+echo "  5) Telegram bridge: the agent will offer to create ~/.pi/agent/tg.json"
+echo "     (bot token + allowed chat id) on first interaction and start tgbridge."
 echo ""

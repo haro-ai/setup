@@ -17,7 +17,7 @@ Beyond git/mise/pi/Tailscale (above), the script now also:
 - configures passwordless sudo via `/etc/sudoers.d/010_<user>-nopasswd`
 - appends to `~/.bashrc`: interactive shells start in `~/core`; SSH logins exec straight into `pi` (skip with `NO_PI=1 ssh ...`)
 - installs `~/.pi/agent/{AGENTS.md,memories.txt,extensions/memory.ts}` from `files/`
-- optionally installs a Telegram bridge (`files/tgbridge.ts`) as a systemd service
+- installs the Telegram bridge (`files/tgbridge.ts`) as a systemd service; the agent itself creates `~/.pi/agent/tg.json` on first interaction (like `SOUL.md`) and enables the unit
 - reminds you to set a real password with `passwd`
 
 ### Setup
@@ -45,16 +45,6 @@ gh auth login --git-protocol ssh
 pi
 # then run: /login
 ```
-On first interaction, pi will generate its identity file (SOUL.md).
+On first interaction, pi will generate its identity file (SOUL.md) and — if it doesn't exist yet — walk you through creating `~/.pi/agent/tg.json` (bot token + allowed chat ids) and enabling `tgbridge`.
 
-### Telegram bridge (optional)
 
-If `~/.pi/agent/tg.json` exists when the script runs, the bridge is enabled automatically:
-
-```sh
-cat > ~/.pi/agent/tg.json <<'EOF'
-{"token": "<bot token from @BotFather>", "allowed": [<your chat id>]}
-EOF
-sudo systemctl enable --now tgbridge
-```
-Messages from allowed chats get answered by a full `pi -p --no-session` session; the last 20 messages are passed back as rolling context. Unknown chats are logged to `~/.pi/agent/tg-pending.log`.
