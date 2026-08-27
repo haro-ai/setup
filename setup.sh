@@ -4,6 +4,13 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 # ----------------------------
+# Agent identity (override via env)
+# ----------------------------
+DEVICE_NAME="${DEVICE_NAME:-Nobell}"
+HUMAN_NAME="${HUMAN_NAME:-Kivlor}"
+AGENT_USER="$(id -un)"
+
+# ----------------------------
 # System updates & core
 # ----------------------------
 echo "==> Updating system"
@@ -31,7 +38,8 @@ sudo apt-get install -y \
   bind9-dnsutils \
   net-tools \
   ripgrep \
-  fd-find
+  fd-find \
+  figlet
 
 echo "==> Configuring Git identity"
 git config --global user.name "Haro"
@@ -102,10 +110,83 @@ sudo systemctl enable --now tailscaled
 # ----------------------------
 sudo systemctl enable --now ssh
 
+# ----------------------------
+# Passwordless sudo
+# ----------------------------
+if [ ! -f "/etc/sudoers.d/010_${AGENT_USER}-nopasswd" ]; then
+  echo "==> Configuring passwordless sudo"
+  echo "${AGENT_USER} ALL=(ALL) NOPASSWD: ALL" | sudo tee "/etc/sudoers.d/010_${AGENT_USER}-nopasswd" >/dev/null
+  sudo chmod 440 "/etc/sudoers.d/010_${AGENT_USER}-nopasswd"
+fi
+
+# ----------------------------
+# MOTD banner (figlet, small font)
+# ----------------------------
+motd_banner=$(figlet -f small "$DEVICE_NAME" 2>/dev/null || figlet "$DEVICE_NAME")
+current_motd="$(cat /etc/motd 2>/dev/null || true)"
+if [ "$current_motd" != "$motd_banner" ]; then
+  echo "==> Installing MOTD banner"
+  printf '%s\n' "$motd_banner" | sudo tee /etc/motd >/dev/null
+fi
+
+# ----------------------------
+# Shell: start in ~/core, SSH logins drop into pi agent
+# ----------------------------
+if ! grep -q 'Start interactive shells in' "$HOME/.bashrc"; then
+  cat >> "$HOME/.bashrc" <<'EOF'
+
+# Start interactive shells in the core directory
+[ -d "$HOME/core" ] && cd "$HOME/core"
+
+# SSH logins drop straight into the pi agent (set NO_PI=1 to skip)
+if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${NO_PI:-}" ]; then
+  exec ~/.local/share/mise/installs/node/lts/bin/pi
+fi
+EOF
+fi
+
+# ----------------------------
+# Pi agent config (~/.pi/agent)
+# ----------------------------
+echo "==> Bootstrapping pi agent config"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)"
+REPO_RAW="https://raw.githubusercontent.com/haro-ai/setup/refs/heads/main"
+
+fetch_file() {
+  # usage: fetch_file <repo-relative-path> <dest>
+  if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/$1" ]; then
+    cp -f "$SCRIPT_DIR/$1" "$2"
+  else
+    echo "==> Fetching $1 from GitHub"
+    mkdir -p "$(dirname "$2")"
+    curl -fsSL "$REPO_RAW/$1" -o "$2"
+  fi
+}
+
+AGENT_DIR="$HOME/.pi/agent"
+mkdir -p "$AGENT_DIR/extensions"
+tmp_agents="$(mktemp)"
+fetch_file files/AGENTS.md "$tmp_agents"
+
+# AGENTS.md — templated with device/human names
+sed -e "s/{{DEVICE_NAME}}/$DEVICE_NAME/g" \
+    -e "s/{{HUMAN_NAME}}/$HUMAN_NAME/g" \
+    -e "s/{{AGENT_USER}}/$AGENT_USER/g" \
+    "$tmp_agents" > "$AGENT_DIR/AGENTS.md"
+rm -f "$tmp_agents"
+
+# Memory extension + empty memory log (append-only JSONL; SOUL.md is written
+# by the agent itself on first interaction, guided by AGENTS.md)
+fetch_file files/memory.ts "$AGENT_DIR/extensions/memory.ts"
+touch "$AGENT_DIR/memories.txt"
+
 echo ""
 echo "Setup complete."
 echo ""
 echo "Next steps:"
-echo "  1) Reboot: sudo reboot"
-echo "  2) After reboot, authenticate Tailscale: sudo tailscale up"
+echo "  1) Set a real password: passwd"
+echo "  2) Reboot: sudo reboot"
+echo "  3) After reboot, authenticate Tailscale: sudo tailscale up"
+echo "  4) Authenticate pi: run 'pi', then /login"
+echo "     On first interaction, pi will generate its identity file (SOUL.md)."
 echo ""
