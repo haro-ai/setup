@@ -6,7 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 # ----------------------------
 # Agent identity (override via env)
 # ----------------------------
-DEVICE_NAME="${DEVICE_NAME:-Nobell}"
+DEVICE_NAME="${DEVICE_NAME:-Haro}"
 HUMAN_NAME="${HUMAN_NAME:-Kivlor}"
 AGENT_USER="$(id -un)"
 
@@ -179,6 +179,48 @@ rm -f "$tmp_agents"
 # by the agent itself on first interaction, guided by AGENTS.md)
 fetch_file files/memory.ts "$AGENT_DIR/extensions/memory.ts"
 touch "$AGENT_DIR/memories.txt"
+
+# ----------------------------
+# Telegram bridge (optional)
+# Installs tgbridge.ts + systemd unit. Only enables the service if
+# ~/.pi/agent/tg.json exists (token + allowed chat ids).
+# ----------------------------
+if [ ! -f "$HOME/.pi/agent/tools/tgbridge.ts" ]; then
+  echo "==> Installing telegram bridge"
+  mkdir -p "$HOME/.pi/agent/tools"
+  fetch_file files/tgbridge.ts "$HOME/.pi/agent/tools/tgbridge.ts"
+  BRIDGE_RUNTIME="$(command -v bun || true)"
+  if [ -z "$BRIDGE_RUNTIME" ]; then
+    mise use -g bun@latest >/dev/null 2>&1 || true
+    eval "$(mise activate bash 2>/dev/null || true)"; hash -r
+    BRIDGE_RUNTIME="$(command -v bun || command -v node)"
+  fi
+
+  sudo tee /etc/systemd/system/tgbridge.service >/dev/null <<EOF2
+[Unit]
+Description=Telegram <-> pi agent bridge (tgbridge.ts)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=${AGENT_USER}
+ExecStart=${BRIDGE_RUNTIME} ${HOME}/.pi/agent/tools/tgbridge.ts
+Restart=always
+RestartSec=15
+WorkingDirectory=${HOME}/.pi/agent
+
+[Install]
+WantedBy=multi-user.target
+EOF2
+  sudo systemctl daemon-reload
+  if [ -f "$HOME/.pi/agent/tg.json" ]; then
+    sudo systemctl enable --now tgbridge
+  else
+    echo "    tg.json not found — unit installed but not enabled."
+    echo "    Add ~/.pi/agent/tg.json: {\"token\": \"...\", \"allowed\": [<chat id>]}"
+    echo "    then: sudo systemctl enable --now tgbridge"
+  fi
+fi
 
 echo ""
 echo "Setup complete."
