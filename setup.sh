@@ -55,14 +55,11 @@ fi
 # ----------------------------
 # Node.js LTS (official nodejs.org distribution; includes npm)
 # ----------------------------
-# Remove the shell activation line written by older versions of this setup.
-if [ -f "$HOME/.bashrc" ]; then
-  sed -i '\|^eval "\$(~/.local/bin/mise activate bash)"$|d' "$HOME/.bashrc"
-fi
 
 case "$(uname -m)" in
   aarch64|arm64) NODE_ARCH="arm64" ;;
   armv7l) NODE_ARCH="armv7l" ;;
+  armv6l) NODE_ARCH="armv7l" ;;
   x86_64) NODE_ARCH="x64" ;;
   *)
     echo "ERROR: Unsupported architecture for the official Node.js binary: $(uname -m)"
