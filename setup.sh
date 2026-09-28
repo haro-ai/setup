@@ -53,48 +53,58 @@ if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
 fi
 
 # ----------------------------
-# Node.js LTS (official nodejs.org distribution; includes npm)
+# Node.js
 # ----------------------------
 
 case "$(uname -m)" in
-  aarch64|arm64) NODE_ARCH="arm64" ;;
-  armv7l) NODE_ARCH="armv7l" ;;
-  armv6l) NODE_ARCH="armv6l" ;;
-  x86_64) NODE_ARCH="x64" ;;
+  armv6l)
+    echo "==> Installing distro Node.js for ARMv6"
+    sudo apt-get install -y nodejs npm
+    ;;
+
+  aarch64|arm64)
+    NODE_ARCH="arm64"
+    ;;
+
+  x86_64)
+    NODE_ARCH="x64"
+    ;;
+
   *)
-    echo "ERROR: Unsupported architecture for the official Node.js binary: $(uname -m)"
+    echo "ERROR: Unsupported architecture: $(uname -m)"
     exit 1
     ;;
 esac
 
-NODE_VERSION="${NODE_VERSION:-$(curl -fsSL https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts != false)][0].version')}"
-case "$NODE_VERSION" in
-  v[0-9]*) ;;
-  *)
-    echo "ERROR: Could not determine the latest Node.js LTS version."
-    exit 1
-    ;;
-esac
+# Install current official LTS where Node provides binaries.
+if [ "$(uname -m)" != "armv6l" ]; then
+  NODE_VERSION="${NODE_VERSION:-$(curl -fsSL https://nodejs.org/dist/index.json |
+    jq -r '[.[] | select(.lts != false)][0].version')}"
 
-if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1 || [ "$(node --version)" != "$NODE_VERSION" ]; then
-  echo "==> Installing Node.js $NODE_VERSION (official LTS distribution)"
+  echo "==> Installing Node.js $NODE_VERSION"
+
   NODE_DIST="node-${NODE_VERSION}-linux-${NODE_ARCH}"
   NODE_TMP_DIR="$(mktemp -d)"
   trap 'rm -rf "$NODE_TMP_DIR"' EXIT
 
-  curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt" -o "$NODE_TMP_DIR/SHASUMS256.txt"
-  curl -fsSL "https://nodejs.org/dist/${NODE_VERSION}/${NODE_DIST}.tar.xz" -o "$NODE_TMP_DIR/${NODE_DIST}.tar.xz"
+  curl -fsSL \
+    "https://nodejs.org/dist/${NODE_VERSION}/SHASUMS256.txt" \
+    -o "$NODE_TMP_DIR/SHASUMS256.txt"
+
+  curl -fsSL \
+    "https://nodejs.org/dist/${NODE_VERSION}/${NODE_DIST}.tar.xz" \
+    -o "$NODE_TMP_DIR/${NODE_DIST}.tar.xz"
+
   (
     cd "$NODE_TMP_DIR"
-    grep -F "  ${NODE_DIST}.tar.xz" SHASUMS256.txt | sha256sum --check --
+    grep -F "  ${NODE_DIST}.tar.xz" SHASUMS256.txt |
+      sha256sum --check --
   )
-  sudo tar -xJf "$NODE_TMP_DIR/${NODE_DIST}.tar.xz" -C /usr/local --strip-components=1
-  hash -r
-fi
 
-if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-  echo "ERROR: Node.js or npm is not on PATH after installation."
-  exit 1
+  sudo tar -xJf "$NODE_TMP_DIR/${NODE_DIST}.tar.xz" \
+    -C /usr/local --strip-components=1
+
+  hash -r
 fi
 
 # ----------------------------
