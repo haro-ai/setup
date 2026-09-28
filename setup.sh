@@ -59,7 +59,7 @@ fi
 case "$(uname -m)" in
   aarch64|arm64) NODE_ARCH="arm64" ;;
   armv7l) NODE_ARCH="armv7l" ;;
-  armv6l) NODE_ARCH="armv7l" ;;
+  armv6l) NODE_ARCH="armv6l" ;;
   x86_64) NODE_ARCH="x64" ;;
   *)
     echo "ERROR: Unsupported architecture for the official Node.js binary: $(uname -m)"
